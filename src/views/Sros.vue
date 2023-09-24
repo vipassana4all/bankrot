@@ -1,5 +1,5 @@
 <script setup>
-    import { ref } from 'vue';
+    import { ref, computed } from 'vue';
     import { storeToRefs } from 'pinia'
     import { useSrosStore } from '@/stores/sros'
     import Sro from '@/components/Sro.vue'
@@ -9,7 +9,13 @@
     let showSro = ref(false)
     let showSroId = ref(0)
     let showSroData = ref({})
+    let filterSro = ref('')
     fetchSros('null')
+
+    const filteredSros = computed(() => {
+        if(filterSro.value.length < 2 ) return sros.value
+        return sros.value.filter(s=>s.name.toLowerCase().includes(filterSro.value.toLowerCase()) || s.regnumber.toLowerCase().includes(filterSro.value.toLowerCase()))
+    })
 </script>
 
 <template>
@@ -30,10 +36,12 @@
     <div v-if="sros.length > 0" class="flex flex-col items-center max-x-sm mx-auto">
         <h1 class="text-4xl p-10 font-bold">СРО</h1>
         <Sro v-if='showSro' :sro="showSroData" @close="showSro = false; router.push('/')" />
+        <input v-show="!showSro" type="search" v-model="filterSro" class="bg-slate-500 rounded-xl p-2 px-5 m-2 bg-clip-padding text-xl text-slate-900 font-normal leading-[1.6] outline-none transition duration-200 ease-in-out focus:border-2  focus:border-slate-400 focus:text-slate-300 focus:outline-none" placeholder="Найти" />
+        <p v-show="!showSro && filterSro.length > 0" class="text-slate-400 m-2">Показано: {{ filteredSros.length }} из {{ sros.length }}</p>
         <ul v-show="!showSro" class="list-outside hover:list-inside w-5/6 place-self-center select-none">
             <li 
                 class="rounded-lg cursor-pointer odd:bg-slate-600 even:bg-slate-700 hover:bg-slate-500 px-5 py-2 m-1"
-                v-for="sro in sros" 
+                v-for="sro in filteredSros" 
                 :key="sro.id"
                 @click="(e)=>{showSroId=(e.target.id==''?e.target.parentNode.id:e.target.id);showSroData=sros.filter(s=>s.id===+showSroId)[0];showSro=!!showSroData;}"
                 >
