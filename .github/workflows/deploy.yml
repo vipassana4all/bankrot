@@ -1,0 +1,51 @@
+# .github/workflows/deploy.yml
+
+name: Deploy VuePress to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Trigger the workflow on pushes to the 'main' branch
+  workflow_dispatch: # Allows you to manually trigger the workflow from the GitHub UI
+
+permissions:
+  contents: read # Allow the action to read your repository content
+  pages: write   # Allow the action to write to the GitHub Pages deployment
+  id-token: write # Required for OpenID Connect (OIDC) authentication for GitHub Pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Run the job on the latest Ubuntu VM
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Action to check out your repository code
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Use Node.js version 20 (or your preferred version)
+          cache: 'npm'    # Cache npm dependencies for faster builds
+
+      - name: Install dependencies
+        run: npm install # Install your project's npm dependencies
+
+      - name: Build project
+        run: npm run build # Build your Vue/Vite project
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist # The directory containing your built static files (Vite's default)
+
+  deploy:
+    environment:
+      name: github-pages # Specify the GitHub Pages environment
+      url: ${{ steps.deployment.outputs.page_url }} # Get the URL of the deployed page
+    runs-on: ubuntu-latest
+    needs: build # This job depends on the 'build' job completing successfully
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4 # The official GitHub Pages deployment action
